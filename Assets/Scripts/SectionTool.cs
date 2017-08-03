@@ -46,22 +46,36 @@ public class SectionTool : MonoBehaviour
         }
 
         var length = (_toPoint - _fromPoint).magnitude;
-        var rotation = Quaternion.LookRotation(_fromPoint - _toPoint, Vector3.up);
-        for (var i = 0; i < length; i++)
+        var rotation = Quaternion.LookRotation(_toPoint - _fromPoint, Vector3.up);
+        var offset = Vector3.zero;
+        //for (var i = 0; i < length; i++)
+        while(length > 0)
         {
-            var instance = Instantiate(_sectionPrefabs[Random.Range(0, _sectionPrefabs.Length - 1)]);
-            instance.transform.position = rotation * GetPosition(instance, i);
+            var instance = Instantiate(_sectionPrefabs[Random.Range(0, _sectionPrefabs.Length)]);
+
+            offset = GetPosition(instance, offset, ref length);
+            instance.transform.position = rotation * offset;
+            offset = GetPosition(instance, offset, ref length);
+
             instance.transform.rotation = rotation;
             instance.transform.SetParent(transform);
         }
     }
 
-    private Vector3 GetPosition(GameObject sectionInstance, int index)
+    private Vector3 GetPosition(GameObject sectionInstance, Vector3 offset, ref float length)
     {
         var meshFilter = sectionInstance.GetComponent<MeshFilter>();
         var bounds = meshFilter.sharedMesh.bounds;
-        var offset = Vector3.forward * bounds.extents.z;
+        var worldExtents = sectionInstance.transform.TransformVector(bounds.extents);
 
-        return offset + Vector3.forward * index * bounds.size.z;
+        //if (offset.magnitude == 0)
+        {
+            length -= worldExtents.z;
+            offset += Vector3.forward * worldExtents.z;
+        }
+
+        //offset += Vector3.forward * worldSize.z * 0.5f;
+
+        return offset;
     }
 }
